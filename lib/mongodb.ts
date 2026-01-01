@@ -1,11 +1,15 @@
 import 'dotenv/config'
 import mongoose from 'mongoose'
 
-const MONGODB_URI = process.env.MONGODB_URI
+/**
+ * Explicit type assertion so TypeScript knows
+ * this will be a string at runtime.
+ */
+const MONGODB_URI = process.env.MONGODB_URI as string
 
 if (!MONGODB_URI) {
   console.error('❌ MONGODB_URI is not defined')
-  process.exit(1)
+  throw new Error('MONGODB_URI missing')
 }
 
 interface MongooseCache {
@@ -13,28 +17,35 @@ interface MongooseCache {
   promise: Promise<typeof mongoose> | null
 }
 
+/**
+ * Global cache (important for Next.js hot reload)
+ */
 declare global {
   // eslint-disable-next-line no-var
   var mongoose: MongooseCache | undefined
 }
 
-let cached = global.mongoose
+let cached: MongooseCache
 
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null }
+if (!global.mongoose) {
+  global.mongoose = { conn: null, promise: null }
 }
 
-async function connectDB() {
-  if (cached!.conn) return cached!.conn
+cached = global.mongoose
 
-  if (!cached!.promise) {
-    cached!.promise = mongoose
-      .connect(MONGODB_URI)
-      .then((mongoose) => mongoose)
+async function connectDB() {
+  if (cached.conn) {
+    return cached.conn
   }
 
-  cached!.conn = await cached!.promise
-  return cached!.conn
+  if (!cached.promise) {
+    cached.promise = mongoose
+      .connect(MONGODB_URI)
+      .then((mongooseInstance) => mongooseInstance)
+  }
+
+  cached.conn = await cached.promise
+  return cached.conn
 }
 
 export default connectDB
