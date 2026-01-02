@@ -1,4 +1,5 @@
 export const runtime = 'nodejs'
+
 import { NextResponse } from 'next/server'
 import cloudinary from 'cloudinary'
 
@@ -24,13 +25,10 @@ export async function POST(req: Request) {
 
     const uploadResult: any = await new Promise((resolve, reject) => {
       cloudinary.v2.uploader
-        .upload_stream(
-          { folder: 'products' },
-          (error, result) => {
-            if (error) reject(error)
-            else resolve(result)
-          }
-        )
+        .upload_stream({ folder: 'products' }, (error, result) => {
+          if (error) reject(error)
+          else resolve(result)
+        })
         .end(buffer)
     })
 
