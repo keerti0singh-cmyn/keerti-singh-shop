@@ -3,7 +3,7 @@ export const runtime = 'nodejs'
 import { NextResponse } from 'next/server'
 import { v2 as cloudinary } from 'cloudinary'
 
-cloudinary.v2.config({
+cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
@@ -23,22 +23,23 @@ export async function POST(req: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer())
 
-    const uploadResult: any = await new Promise((resolve, reject) => {
-      cloudinary.v2.uploader
-        .upload_stream({ folder: 'products' }, (error, result) => {
-          if (error) reject(error)
-          else resolve(result)
-        })
-        .end(buffer)
+    const result: any = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        { folder: 'products' },
+        (err, res) => {
+          if (err) reject(err)
+          else resolve(res)
+        }
+      ).end(buffer)
     })
 
     return NextResponse.json({
       success: true,
-      imageUrl: uploadResult.secure_url,
+      imageUrl: result.secure_url,
     })
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: 'Image upload failed' },
+      { success: false, error: 'Upload failed' },
       { status: 500 }
     )
   }
